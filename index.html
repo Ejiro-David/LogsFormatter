@@ -1,522 +1,2635 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logs Formatter by teerex</title>
+  
+  <!-- Custom Favicon - T-Rex Logo -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14'>🦖</text></svg>">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>easyLogin-2FA</title>
-    <script src="https://cdn.jsdelivr.net/npm/otplib/otplib-browser.min.js"></script>
 
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Share+Tech+Mono&display=swap');
     
-    <!-- Essential SEO -->
-<meta name="description" content="easyLogin by FastAccounts — a fast, minimalist TOTP 2FA generator. Instantly generate secure one-time codes from any Base32 secret. No signup, no clutter, 100% private.">
-<meta name="keywords" content="2FA, TOTP, authenticator, fast accounts, easy login, Base32, otp generator, totp generator, fastaccounts, easyLogin">
-<meta name="author" content="FastAccounts">
+    :root {
+      /* Primary Colors - Professional Dark Theme */
+      --primary-charcoal: #1E2936;
+      --primary-sage: #4A9B7F;
+      --sage-light: #5FB899;
+      --sage-dark: #3A7D65;
+      
+      /* Dark Theme Neutrals */
+      --neutral-dark: #0F1419;
+      --neutral-medium: #8B95A1;
+      --neutral-light: #D1D5DB;
+      --white: #FFFFFF;
+      --off-white: #1A2332;
+      --bg-dark: #131920;
+      --bg-darker: #0A0E13;
+      --bg-card: #1E2936;
+      --border-color: #2A3441;
+      
+      /* Functional */
+      --success: #4A9B7F;
+      --warning: #F59E0B;
+      --error: #EF4444;
+      --info: #3B82F6;
+      
+      /* Shadows - Enhanced for dark mode */
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+      --glow-sm: 0 0 10px rgba(74, 155, 127, 0.1);
+      --glow-md: 0 0 20px rgba(74, 155, 127, 0.15);
+      
+      /* Border Radius */
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-<!-- Open Graph (Improves link previews on WhatsApp, Twitter, Facebook) -->
-<meta property="og:title" content="easyLogin™ by FastAccounts">
-<meta property="og:description" content="Instant 2FA (TOTP) generator. Paste your secret, get your login code. Clean, private, fast.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://YOUR-SITE.netlify.app/">
-<meta property="og:image" content="https://YOUR-SITE.netlify.app/thumbnail.png">
+    body {
+      font-family: 'Inter', 'Share Tech Mono', sans-serif;
+      background: linear-gradient(135deg, var(--bg-darker) 0%, var(--neutral-dark) 50%, var(--primary-charcoal) 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: var(--neutral-light);
+      position: relative;
+      overflow-x: hidden;
+    }
 
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="easyLogin™ by FastAccounts">
-<meta name="twitter:description" content="Minimal, fast 2FA code generator. Built for speed, privacy, and simplicity.">
+    /* Subtle pattern overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 2px,
+          rgba(74, 155, 127, 0.02) 2px,
+          rgba(74, 155, 127, 0.02) 4px
+        );
+      pointer-events: none;
+      z-index: 1;
+    }
 
-<!-- Mobile & Crawlers -->
-<meta name="theme-color" content="#4A9B7F">
-<meta name="robots" content="index, follow">
-<meta name="googlebot" content="index, follow">
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      box-shadow: var(--shadow-lg), var(--glow-md);
+      border: 1px solid var(--border-color);
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(10px);
+    }
 
-<!-- Canonical URL -->
-<link rel="canonical" href="https://YOUR-SITE.netlify.app/">
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      border-bottom: 3px solid var(--primary-sage);
+      padding-bottom: 25px;
+    }
 
-<!-- Structured Data (Boosts Google SEO) -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "easyLogin",
-  "url": "https://YOUR-SITE.netlify.app/",
-  "description": "A lightweight TOTP 2FA generator that instantly creates secure one-time login codes.",
-  "applicationCategory": "SecurityApplication",
-  "operatingSystem": "All",
-  "creator": {
-    "@type": "Organization",
-    "name": "FastAccounts"
-  }
-}
-</script>
+    .header h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--sage-light) 0%, var(--primary-sage) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+      letter-spacing: 2px;
+      font-family: 'Inter', sans-serif;
+      filter: drop-shadow(0 0 30px rgba(74, 155, 127, 0.3));
+    }
 
+    .header h1::before {
+      content: '⚡ ';
+      -webkit-text-fill-color: var(--primary-sage);
+    }
 
+    .header h1::after {
+      content: ' ⚡';
+      -webkit-text-fill-color: var(--primary-sage);
+    }
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Open+Sans:wght@400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="fa-style.css">
+    .header p {
+      color: var(--neutral-light);
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 3px;
+      margin-top: 10px;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
 
-    <style>
-        /* All styles are now in fa-style.css - this tag is kept for any inline styles if needed */
-    </style>
+    .header > div {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, rgba(74, 155, 127, 0.15) 0%, rgba(74, 155, 127, 0.08) 100%);
+      border-radius: var(--radius-md);
+      display: inline-block;
+      border: 1px solid rgba(74, 155, 127, 0.3);
+    }
+
+    .header > div small {
+      color: var(--sage-light);
+      font-weight: 600;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    .converter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .input-section, .output-section {
+      background: var(--off-white);
+      border-radius: var(--radius-md);
+      padding: 25px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .input-section:hover, .output-section:hover {
+      box-shadow: var(--shadow-md), var(--glow-sm);
+      border-color: var(--primary-sage);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: var(--neutral-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      flex-wrap: wrap;
+    }
+
+    .section-title::before {
+      content: '>>> ';
+      color: var(--primary-sage);
+      font-weight: bold;
+    }
+    
+    .section-title > span:first-of-type {
+      flex: 0 0 auto;
+    }
+    
+    .section-title .title-text {
+      flex: 0 0 auto;
+      margin-right: auto;
+    }
+
+    .icon {
+      display: none;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      padding: 18px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-family: 'Courier Prime', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: vertical;
+      transition: all 0.3s ease;
+      background: var(--bg-darker);
+      color: var(--neutral-light);
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary-sage);
+      box-shadow: 0 0 0 3px rgba(74, 155, 127, 0.2), var(--glow-sm);
+      background: var(--bg-darker);
+    }
+
+    textarea::placeholder {
+      color: rgba(139, 149, 161, 0.5);
+      font-style: italic;
+      line-height: 1.6;
+      font-size: 13px;
+    }
+
+    textarea:focus::placeholder {
+      opacity: 0.3;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border: 2px solid var(--primary-sage);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: 'Inter', sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(95, 122, 97, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.4s ease, height 0.4s ease;
+      z-index: 0;
+      border-radius: 50%;
+    }
+
+    .btn:hover::before {
+      width: 300%;
+      height: 300%;
+    }
+
+    .btn span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-primary {
+      background: var(--primary-sage);
+      color: var(--white);
+      border: 2px solid var(--primary-sage);
+      box-shadow: var(--glow-sm);
+    }
+
+    .btn-primary:hover {
+      background: var(--sage-light);
+      border-color: var(--sage-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md), var(--glow-md);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--sage-light);
+      border: 2px solid var(--primary-sage);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(74, 155, 127, 0.15);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md), var(--glow-sm);
+      border-color: var(--sage-light);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .format-section {
+      background: var(--off-white);
+      border-radius: var(--radius-md);
+      padding: 25px;
+      margin-top: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.5s ease;
+      transform: translateY(0);
+      opacity: 1;
+      max-height: 600px;
+      overflow: hidden;
+    }
+
+    .format-section.hidden {
+      transform: translateY(-20px);
+      opacity: 0;
+      max-height: 0;
+      padding: 0 25px;
+      margin-top: 0;
+    }
+
+    .section-subtitle {
+      color: var(--neutral-medium);
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .format-input {
+      width: 100%;
+      padding: 16px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-family: 'Courier Prime', monospace;
+      font-size: 14px;
+      margin-bottom: 15px;
+      transition: all 0.3s ease;
+      resize: vertical;
+      min-height: 120px;
+      background: var(--bg-darker);
+      color: var(--neutral-light);
+    }
+
+    .format-input:focus {
+      outline: none;
+      border-color: var(--primary-sage);
+      box-shadow: 0 0 0 3px rgba(74, 155, 127, 0.2), var(--glow-sm);
+      background: var(--bg-darker);
+    }
+    
+    .format-input::placeholder {
+      color: rgba(139, 149, 161, 0.5);
+      font-style: italic;
+    }
+
+    .format-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-save {
+      background: var(--primary-sage);
+      color: var(--white);
+      border: 2px solid var(--primary-sage);
+    }
+
+    .btn-save:hover {
+      background: var(--sage-dark);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-save.saved {
+      background: var(--success);
+      border-color: var(--success);
+      animation: saveSuccess 0.6s ease;
+    }
+
+    .social-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(95, 122, 97, 0.2);
+    }
+
+    .btn-social {
+      padding: 8px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      text-decoration: none;
+      color: var(--sage-light);
+      background: var(--bg-darker);
+      min-width: 70px;
+      height: 36px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-social:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md), var(--glow-sm);
+      background: var(--primary-sage);
+      color: var(--white);
+      border-color: var(--primary-sage);
+    }
+
+    .btn-social:active {
+      transform: translateY(0);
+    }
+
+    .btn-social:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-social.active {
+      background: var(--primary-sage);
+      color: var(--white);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-social {
+      position: relative;
+    }
+
+    .btn-social::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary-charcoal);
+      color: var(--white);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      box-shadow: var(--shadow-md);
+      pointer-events: none;
+    }
+
+    .btn-social::before {
+      content: '';
+      position: absolute;
+      bottom: 122%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--primary-charcoal);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .btn-social:hover::after,
+    .btn-social:hover::before {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    @keyframes saveSuccess {
+      0% { transform: scale(1) translateY(-2px); }
+      50% { transform: scale(1.05) translateY(-4px); }
+      100% { transform: scale(1) translateY(-2px); }
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--primary-sage);
+      color: var(--white);
+      padding: 16px 28px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 56px;
+      height: 32px;
+      margin-left: 10px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(95, 122, 97, 0.2);
+      transition: .4s;
+      border-radius: 32px;
+      border: 2px solid rgba(95, 122, 97, 0.3);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 24px;
+      width: 24px;
+      left: 3px;
+      bottom: 2px;
+      background-color: var(--primary-sage);
+      transition: .4s;
+      border-radius: 50%;
+      box-shadow: var(--shadow-sm);
+    }
+
+    input:checked + .slider {
+      background: var(--primary-sage);
+      border-color: var(--primary-sage);
+    }
+
+    input:checked + .slider:before {
+      background-color: var(--white);
+      transform: translateX(24px);
+    }
+
+    .toggle-switch input:disabled + .slider {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, var(--off-white) 0%, var(--bg-card) 100%);
+      border: 1px solid var(--border-color);
+      color: var(--neutral-light);
+      padding: 24px;
+      border-radius: var(--radius-md);
+      text-align: center;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md), var(--glow-sm);
+      border-color: var(--primary-sage);
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--sage-light) 0%, var(--primary-sage) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-family: 'Inter', sans-serif;
+      filter: drop-shadow(0 0 20px rgba(74, 155, 127, 0.2));
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--neutral-medium);
+      font-weight: 600;
+    }
+
+    /* Accordion Styles */
+    .accordion {
+      background: var(--off-white);
+      border-radius: var(--radius-md);
+      margin-top: 30px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .accordion-header {
+      background: var(--bg-darker);
+      padding: 20px 25px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .accordion-header:hover {
+      background: rgba(74, 155, 127, 0.08);
+    }
+
+    .accordion-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--neutral-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .accordion-icon {
+      font-size: 1rem;
+      transition: transform 0.3s ease;
+      color: var(--primary-sage);
+      font-weight: bold;
+    }
+
+    .accordion-section.active .accordion-icon {
+      transform: rotate(180deg);
+    }
+
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: var(--bg-darker);
+    }
+
+    .accordion-section.active .accordion-content {
+      max-height: 600px;
+    }
+
+    .accordion-items {
+      padding: 20px 25px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .accordion-item {
+      background: var(--off-white);
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      border-left: 4px solid var(--primary-sage);
+      color: var(--neutral-medium);
+      transition: all 0.3s ease;
+    }
+
+    .accordion-item:hover {
+      background: rgba(74, 155, 127, 0.1);
+      border-left-color: var(--sage-light);
+      transform: translateX(4px);
+    }
+
+    .accordion-item strong {
+      color: var(--neutral-light);
+      font-weight: 600;
+    }
+
+    /* Help Section */
+    .help-section {
+      background: var(--off-white) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 25px !important;
+      margin-top: 25px !important;
+      border: 1px solid var(--border-color) !important;
+      border-left: 4px solid var(--primary-sage) !important;
+      box-shadow: var(--shadow-sm) !important;
+    }
+
+    .help-title {
+      font-size: 1.15rem !important;
+      font-weight: 600 !important;
+      margin-bottom: 18px !important;
+      color: var(--neutral-light) !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      letter-spacing: 0.5px !important;
+    }
+
+    .help-content {
+      color: var(--neutral-medium) !important;
+      line-height: 1.7 !important;
+    }
+
+    .help-content p {
+      margin-bottom: 12px !important;
+      color: var(--neutral-medium) !important;
+    }
+
+    .help-content strong {
+      color: var(--neutral-light) !important;
+      font-weight: 600 !important;
+    }
+
+    .help-steps {
+      margin: 18px 0 !important;
+      padding-left: 0 !important;
+      list-style: none !important;
+    }
+
+    .help-step {
+      background: var(--bg-darker) !important;
+      margin: 10px 0 !important;
+      padding: 14px 18px !important;
+      border-radius: var(--radius-sm) !important;
+      border-left: 3px solid var(--primary-sage) !important;
+      transition: all 0.3s ease !important;
+      box-shadow: var(--shadow-sm) !important;
+    }
+
+    .help-step:hover {
+      background: rgba(74, 155, 127, 0.08) !important;
+      transform: translateX(4px) !important;
+      box-shadow: var(--shadow-md), var(--glow-sm) !important;
+    }
+
+    .step-number {
+      display: inline-block !important;
+      background: var(--primary-sage) !important;
+      color: var(--white) !important;
+      width: 28px !important;
+      height: 28px !important;
+      border-radius: 50% !important;
+      text-align: center !important;
+      line-height: 28px !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      margin-right: 12px !important;
+    }
+
+    .privacy-notice {
+      margin-top: 18px !important;
+      padding: 14px 18px !important;
+      background: rgba(74, 155, 127, 0.1) !important;
+      border-radius: var(--radius-sm) !important;
+      font-size: 0.9rem !important;
+      border: 1px solid var(--border-color) !important;
+      border-left: 3px solid var(--primary-sage) !important;
+    }
+
+    .privacy-notice strong {
+      color: var(--sage-light) !important;
+    }
+
+    /* Footer Styles */
+    .footer {
+      text-align: center;
+      padding: 35px 20px;
+      margin-top: 40px;
+      border-top: 2px solid var(--border-color);
+      background: var(--off-white);
+      border-radius: var(--radius-md);
+    }
+
+    .footer-content {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .footer-text {
+      color: var(--neutral-medium);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .footer-link {
+      color: var(--sage-light);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.5px;
+    }
+
+    .footer-link:hover {
+      color: var(--white);
+      background: rgba(74, 155, 127, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .footer-brand {
+      color: var(--neutral-medium);
+      font-size: 0.85rem;
+      font-weight: 400;
+    }
+
+    .footer-brand .teerex-link {
+      color: var(--sage-light);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer-brand .teerex-link:hover {
+      text-decoration: underline;
+      color: var(--white);
+    }
+
+    /* Output controls styling */
+    .output-controls {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .output-controls small {
+      color: var(--neutral-medium);
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+
+    .section-title small {
+      font-size: 11px;
+      margin-left: 8px;
+      color: var(--neutral-medium);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Toggle label structure */
+    .section-title label.toggle-animation {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .section-title label.toggle-animation small {
+      margin: 0;
+      white-space: nowrap;
+      order: 1;
+    }
+    
+    .section-title label.toggle-animation .toggle-switch {
+      order: 2;
+    }
+    
+    /* Toggle group wrapper for better mobile organization */
+    @media (max-width: 480px) {
+      .section-title label.toggle-animation {
+        width: 100%;
+        padding: 12px 16px;
+        background: rgba(74, 155, 127, 0.05);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
+        justify-content: space-between;
+        transition: all 0.3s ease;
+        margin-left: 0 !important;
+      }
+      
+      .section-title label.toggle-animation:active {
+        background: rgba(74, 155, 127, 0.1);
+        border-color: var(--primary-sage);
+      }
+      
+      .section-title label.toggle-animation small {
+        flex: 1;
+        text-align: left;
+        font-size: 13px;
+        color: var(--neutral-light);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .section-title label.toggle-animation .toggle-switch {
+        margin: 0;
+        flex-shrink: 0;
+      }
+    }
+
+    /* Separator selector styling */
+    #separatorSelector {
+      background: rgba(74, 155, 127, 0.1);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    #separatorSelector label {
+      color: var(--sage-light);
+    }
+
+    #reverseSeparator {
+      background: var(--bg-darker);
+      color: var(--neutral-light);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+    }
+
+    #reverseSeparator:focus {
+      border-color: var(--primary-sage);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(74, 155, 127, 0.2), var(--glow-sm);
+    }
+
+    #separatorSelector small {
+      color: var(--neutral-medium);
+    }
+
+    /* Mobile Optimizations */
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        padding: 16px;
+        border-radius: var(--radius-md);
+      }
+      
+      .header {
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+      }
+      
+      .header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+      }
+      
+      .header p {
+        margin-top: 8px;
+        font-size: 0.75rem;
+        letter-spacing: 1.5px;
+      }
+
+      .header > div {
+        padding: 8px 12px;
+        margin-top: 12px;
+      }
+
+      .header > div small {
+        font-size: 0.7rem;
+      }
+      
+      .converter-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      
+      .input-section, .output-section {
+        padding: 16px;
+      }
+      
+      textarea {
+        height: 200px;
+        padding: 14px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      
+      .toggle-switch {
+        width: 48px;
+        height: 26px;
+        margin-left: 6px;
+      }
+      
+      .slider:before {
+        height: 20px;
+        width: 20px;
+        left: 2px;
+        bottom: 2px;
+      }
+      
+      input:checked + .slider:before {
+        transform: translateX(22px);
+      }
+      
+      .section-title {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 0.85rem;
+        margin-bottom: 18px;
+      }
+      
+      .section-title::before {
+        margin-bottom: -8px;
+      }
+      
+      .section-title .title-text {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 4px;
+      }
+      
+      /* Toggle controls container */
+      .section-title .toggle-switch {
+        margin-left: 0;
+      }
+      
+      .section-title small {
+        font-size: 11px;
+        margin-left: 0;
+        font-weight: 600;
+      }
+      
+      /* Create toggle groups */
+      .section-title label.toggle-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .section-title label.toggle-switch[style*="margin-left"] {
+        margin-left: 0 !important;
+        margin-top: 0;
+      }
+      
+      .output-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .output-controls small {
+        font-size: 11px;
+      }
+      
+      .social-buttons {
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      
+      .btn-social {
+        min-height: 44px;
+        height: 44px;
+        width: 100%;
+        font-size: 12px;
+        padding: 10px 16px;
+        justify-content: center;
+        touch-action: manipulation;
+      }
+
+      .btn-social::after {
+        bottom: 105%;
+        font-size: 10px;
+        padding: 6px 10px;
+        max-width: 200px;
+        white-space: normal;
+        text-align: center;
+      }
+      
+      .btn-social::before {
+        bottom: 97%;
+      }
+      
+      .controls {
+        flex-direction: column;
+        gap: 10px;
+        margin: 20px 0;
+      }
+      
+      .btn {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 13px;
+        justify-content: center;
+        min-height: 44px;
+        touch-action: manipulation;
+      }
+      
+      .format-section {
+        padding: 16px;
+      }
+
+      #separatorSelector {
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+
+      #separatorSelector label {
+        font-size: 11px;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      #reverseSeparator {
+        padding: 10px 12px;
+        font-size: 13px;
+        width: 100%;
+        min-height: 44px;
+      }
+
+      #separatorSelector small {
+        font-size: 10px;
+        margin-top: 6px;
+      }
+      
+      .format-controls {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .format-controls .btn {
+        width: 100%;
+      }
+      
+      .stats {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 20px;
+      }
+      
+      .stat-card {
+        padding: 16px;
+      }
+      
+      .stat-number {
+        font-size: 2rem;
+      }
+
+      .stat-label {
+        font-size: 0.75rem;
+      }
+
+      .accordion {
+        margin-top: 20px;
+      }
+
+      .accordion-header {
+        padding: 14px 16px;
+      }
+
+      .accordion-title {
+        font-size: 0.85rem;
+      }
+
+      .accordion-items {
+        padding: 14px 16px;
+      }
+
+      .accordion-item {
+        padding: 12px 14px;
+        font-size: 0.8rem;
+      }
+
+      .help-section {
+        padding: 16px !important;
+        margin-top: 20px !important;
+      }
+
+      .help-title {
+        font-size: 0.95rem !important;
+      }
+
+      .help-step {
+        padding: 12px 14px !important;
+        font-size: 0.8rem !important;
+      }
+
+      .step-number {
+        width: 22px !important;
+        height: 22px !important;
+        line-height: 22px !important;
+        font-size: 11px !important;
+        margin-right: 8px !important;
+      }
+
+      .privacy-notice {
+        padding: 12px 14px !important;
+        font-size: 0.8rem !important;
+      }
+
+      .footer {
+        padding: 20px 14px;
+        margin-top: 24px;
+      }
+
+      .footer-text {
+        font-size: 0.8rem;
+      }
+
+      .footer-links {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .footer-brand {
+        font-size: 0.75rem;
+      }
+    }
+
+    @media (min-width: 481px) and (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      
+      .container {
+        padding: 24px;
+      }
+      
+      .header h1 {
+        font-size: 2.2rem;
+      }
+      
+      .converter-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      textarea {
+        height: 250px;
+      }
+      
+      .toggle-switch {
+        width: 50px;
+        height: 28px;
+      }
+      
+      .slider:before {
+        height: 22px;
+        width: 22px;
+      }
+      
+      input:checked + .slider:before {
+        transform: translateX(22px);
+      }
+      
+      .social-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      
+      .btn-social {
+        min-height: 42px;
+        height: 42px;
+      }
+      
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .controls {
+        gap: 12px;
+      }
+      
+      .btn {
+        padding: 14px 28px;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .converter-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="page-wrapper">
-        <div>
-            <div class="page-title"> easyLogin™️  - FastAccounts </div>
-            <div class="container">
-                <div id="mainDisplay">
-                    <!-- Dynamic content will be inserted here -->
-                </div>
-                
-                <div id="manualEntry" style="display: none;">
-                    <div class="input-group">
-                        <input 
-                            type="text" 
-                            id="secretInput" 
-                            placeholder="Paste Base32 secret here (A-Z, 2-7)" 
-                            autocomplete="off"
-                            autocapitalize="off"
-                            autocorrect="off"
-                            spellcheck="false"
-                        />
-                        <div class="input-hint">Typically 16-32 characters, letters A-Z and numbers 2-7 only</div>
-                        <div id="inputError" class="error-message"></div>
-                    </div>
-                    <div class="action-buttons">
-                        <button id="generateBtn" onclick="startFromInput()">GENERATE</button>
-                        <button id="clearBtn" onclick="clearInput()" class="clear-btn" disabled>CLEAR</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="marketing-section">
-                <p class="marketing-headline">Trusted by 1,200+ buyers & resellers</p>
-                <a href="https://chat.whatsapp.com/L4pqTeTiKIF9AXcbpvMLCo" class="marketing-link" target="_blank">JOIN WHATSAPP →</a>
-                <p class="marketing-subtext">Free • Updates daily</p>
-            </div>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>FASTACCOUNTS</h1>
+      <p>BULK CREDENTIAL PARSER</p>
+      <div>
+        <small>🛡️ 100% BROWSER-BASED • YOUR DATA NEVER LEAVES YOUR DEVICE</small>
+      </div>
     </div>
 
-<div class="page-footer">
-    <a href="https://www.rottenlibrary.net/#gsc.tab=0" class="trex-link" target="_blank">by teerex 🦖</a>
-</div>
+    <div class="converter-grid">
+      <div class="input-section">
+        <div class="section-title">
+          <span class="icon"></span>
+          <span class="title-text">Input Text</span>
+          <label class="toggle-animation">
+            <small>Auto Convert</small>
+            <div class="toggle-switch">
+              <input type="checkbox" id="autoConvert" checked>
+              <span class="slider"></span>
+            </div>
+          </label>
+          <label class="toggle-animation" style="margin-left: 15px;">
+            <small>Reverse Mode</small>
+            <div class="toggle-switch">
+              <input type="checkbox" id="reverseMode">
+              <span class="slider"></span>
+            </div>
+          </label>
+        </div>
+        
+        <!-- Separator Selector (hidden by default, shown in reverse mode) -->
+        <div id="separatorSelector" style="display: none; margin-bottom: 15px; padding: 12px; background: rgba(0, 255, 65, 0.1); border: 1px solid #00ff41; border-radius: 0;">
+          <label style="color: #00ff41; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-right: 10px;">
+            Output Separator:
+          </label>
+          <select id="reverseSeparator" style="background: #030609; color: #00ff41; border: 2px solid #00ff41; border-radius: 0; padding: 8px 15px; font-family: 'Share Tech Mono', monospace; font-size: 14px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">
+            <option value=":">: (Colon)</option>
+            <option value="|">| (Pipe)</option>
+            <option value=";">; (Semicolon)</option>
+            <option value=",">, (Comma)</option>
+            <option value="-">- (hyphen)</option>
+            <option value="~">~ (tilda)</option>
+          </select>
+          <small style="display: block; margin-top: 8px; color: #00cc33; font-size: 11px;">
+            Choose how credentials should be separated in the output
+          </small>
+        </div>
+        
+        <textarea id="input" placeholder="Enter raw credential logs here:
 
-    <div id="copyToast" class="toast">Code copied! ✓</div>
+Examples:
+user:pass:2FA_CODE
+user|pass|email|2FA_CODE  
+user;pass;email;emailpass;2FA_CODE
 
-    <script>
-        let generateToken;
-        let currentInterval;
+Supports various separators: : | ; -
+Auto-detects credential formats" 
+style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;"></textarea>
+      </div>
 
-        function cleanSecretInput(secret) {
-            // Remove spaces, dashes, underscores and convert to uppercase
-            return secret.replace(/[\s\-_]/g, '').toUpperCase();
+      <div class="output-section">
+        <div class="section-title">
+          <span class="icon"></span>
+          Converted Output
+        </div>
+        <textarea id="output" readonly placeholder="Converted credentials will appear here:
+
+Clean, formatted output with working 2FA links
+Auto-updates as you type (when auto-convert is on)
+Copy button available after conversion"
+style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;"></textarea>
+        
+        <!-- 2FA Toggle Button -->
+        <div class="output-controls" style="margin-top: 15px; display: flex; align-items: center; gap: 10px;">
+          <label class="toggle-switch toggle-animation" style="margin: 0;">
+            <input type="checkbox" id="toggleLinks" checked disabled>
+            <span class="slider"></span>
+          </label>
+          <small id="toggleLabel" style="color: #999;">Convert 2FA to Links (No 2FA detected)</small>
+        </div>
+        
+        <!-- Social Media Buttons -->
+        <div class="social-buttons" id="socialButtons">
+          <small style="color: #666; font-size: 10px; margin-right: 8px;">Profile Links:</small>
+          <button class="btn-social btn-x" onclick="generateSocialLinks('x')" id="btnX" disabled data-tooltip="Generate X (Twitter) profile links from usernames">
+            𝕏
+          </button>
+          <button class="btn-social btn-instagram" onclick="generateSocialLinks('instagram')" id="btnInstagram" disabled data-tooltip="Generate Instagram profile links from usernames">
+            📷
+          </button>
+          <button class="btn-social btn-facebook" onclick="generateSocialLinks('facebook')" id="btnFacebook" disabled data-tooltip="Generate Facebook profile links from usernames">
+            📘
+          </button>
+          <button class="btn-social btn-tiktok" onclick="generateSocialLinks('tiktok')" id="btnTiktok" disabled data-tooltip="Generate TikTok profile links from usernames">
+            🎵
+          </button>
+          <button class="btn-social btn-linkedin" onclick="generateSocialLinks('linkedin')" id="btnLinkedin" disabled data-tooltip="Generate LinkedIn profile links from usernames">
+            💼
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" onclick="manualConvert()">
+        🔄 Convert Now
+      </button>
+      <button class="btn btn-secondary" onclick="copyOutput()">
+        📋 Copy Output
+      </button>
+      <button class="btn btn-secondary" onclick="clearAll()">
+        🗑️ Clear All
+      </button>
+    </div>
+
+    <div class="format-section" id="formatSection">
+      <div class="section-title">
+        <span class="icon"></span>
+        Custom Output Format
+      </div>
+      <div class="section-subtitle">
+        ⚙️ Customize how your credentials are formatted
+      </div>
+      
+      <textarea class="format-input" id="formatInput" rows="6" placeholder="Enter your desired output format using detected structure:
+
+username:password:2fa
+
+Change field names as needed:
+- Keep fields you want
+- Use 'omit' to skip fields  
+- Supports separators: : | ; ,
+
+Example: username:password:omit:2fa"
+style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;"></textarea>
+
+      <div class="format-controls">
+        <button class="btn btn-save" onclick="saveFormat()">
+          💾 Save Format
+        </button>
+        <button class="btn btn-secondary" onclick="resetFormat()">
+          🔄 Reset Default
+        </button>
+      </div>
+    </div>
+
+    <!-- 2FA Prefix Configuration Section -->
+    <div class="format-section" id="prefixSection" style="margin-top: 20px;">
+      <div class="section-title">
+        <span class="icon"></span>
+        2FA Link Prefix
+      </div>
+      <div class="section-subtitle">
+        🔗 Customize your 2FA link prefix URL
+      </div>
+      
+      <input type="text" id="prefixInput" class="format-input" 
+             placeholder="Enter your 2FA link prefix (e.g., https://easylogin-2fa.netlify.app/)" 
+             style="height: 50px; padding: 15px; font-size: 14px; resize: none;">
+
+      <div class="format-controls" style="margin-top: 10px;">
+        <button class="btn btn-save" id="savePrefix" onclick="save2FAPrefix()">
+          💾 Save Prefix
+        </button>
+        <button class="btn btn-secondary" onclick="reset2FAPrefix()">
+          🔄 Reset to Default
+        </button>
+      </div>
+      
+      <p style="color: #00cc33; font-size: 12px; margin-top: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">
+        💡 Current prefix: <span id="currentPrefix" style="color: #00ff41;">https://easylogin-2fa.netlify.app/</span>
+      </p>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="totalConverted">0</div>
+        <div class="stat-label">Credentials Processed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="patternsDetected">0</div>
+        <div class="stat-label">Patterns Detected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="charactersProcessed">0</div>
+        <div class="stat-label">Characters Processed</div>
+      </div>
+    </div>
+
+      <!-- Smart Processing Tips - Accordion Style -->
+      <div class="accordion">
+        <!-- Security & Privacy Section -->
+        <div class="accordion-section" onclick="toggleAccordion(this)">
+          <div class="accordion-header">
+            <div class="accordion-title">🔒 Security & Privacy</div>
+            <div class="accordion-icon">▼</div>
+          </div>
+          <div class="accordion-content">
+            <div class="accordion-items">
+              <div class="accordion-item">
+                <strong>100% Browser-Based:</strong> All processing happens locally - your data never leaves your device
+              </div>
+              <div class="accordion-item">
+                <strong>Privacy First:</strong> No servers, no tracking, no data collection - everything stays on your device
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Features & Detection Section -->
+        <div class="accordion-section active" onclick="toggleAccordion(this)">
+          <div class="accordion-header">
+            <div class="accordion-title">🚀 Features & Detection</div>
+            <div class="accordion-icon">▼</div>
+          </div>
+          <div class="accordion-content">
+            <div class="accordion-items">
+              <div class="accordion-item">
+                <strong>Auto-Detection:</strong> Supports user:pass:2FA, user|pass|2FA, user;pass;2FA formats automatically
+              </div>
+              <div class="accordion-item">
+                <strong>2FA Links:</strong> Toggle between clickable links and plain codes using the output toggle
+              </div>
+              <div class="accordion-item">
+                <strong>Social Links:</strong> Generate profile URLs for X, Instagram, Facebook, TikTok, and LinkedIn from usernames
+              </div>
+              <div class="accordion-item">
+                <strong>Smart Cleanup:</strong> Automatically detects and omits hashes, tokens, and unwanted data
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customization Section -->
+        <div class="accordion-section" onclick="toggleAccordion(this)">
+          <div class="accordion-header">
+            <div class="accordion-title">🎨 Customization</div>
+            <div class="accordion-icon">▼</div>
+          </div>
+          <div class="accordion-content">
+            <div class="accordion-items">
+              <div class="accordion-item">
+                <strong>Custom Formats:</strong> Use manual mode to rename fields (e.g., change "field4" to "email-password")
+              </div>
+              <div class="accordion-item">
+                <strong>Format Memory:</strong> Save custom formats for reuse - they persist across sessions
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tips & Best Practices Section -->
+        <div class="accordion-section" onclick="toggleAccordion(this)">
+          <div class="accordion-header">
+            <div class="accordion-title">⚡ Tips & Best Practices</div>
+            <div class="accordion-icon">▼</div>
+          </div>
+          <div class="accordion-content">
+            <div class="accordion-items">
+              <div class="accordion-item">
+                <strong>Quick Tip:</strong> Start with auto-convert, then switch to manual to fine-tune field names
+              </div>
+              <div class="accordion-item">
+                <strong>Best Practice:</strong> Use "omit" in custom formats to skip unwanted fields
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Getting Started Guide - Mobile Optimized -->
+    <div class="help-section">
+      <div class="help-title">
+        💡 Getting Started Guide
+      </div>
+      <div class="help-content">
+        <p><strong>🔰 First Time User?</strong> Follow these steps:</p>
+        <div class="help-steps">
+          <div class="help-step">
+            <span class="step-number">1</span>
+            <strong>Paste Your Data:</strong> Drop credential logs in the input box (left side)
+          </div>
+          <div class="help-step">
+            <span class="step-number">2</span>
+            <strong>Auto-Convert First:</strong> Toggle should be ON by default - watch the magic happen!
+          </div>
+          <div class="help-step">
+            <span class="step-number">3</span>
+            <strong>Need Custom Names?</strong> Toggle OFF auto-convert to access manual formatting
+          </div>
+          <div class="help-step">
+            <span class="step-number">4</span>
+            <strong>Generate Social Links:</strong> Use the profile link buttons to extract usernames and create social media URLs
+          </div>
+          <div class="help-step">
+            <span class="step-number">5</span>
+            <strong>Save Formats:</strong> Create templates you can reuse later
+          </div>
+          <div class="help-step">
+            <span class="step-number">6</span>
+            <strong>2FA Control:</strong> Use the output toggle to switch between links and plain codes
+          </div>
+        </div>
+        <div class="privacy-notice">
+          🛡️ <strong>Privacy First:</strong> Everything processes in your browser - no data is sent to any server. Your credentials stay 100% private and secure.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-content">
+      <div class="footer-text">
+        🔐 Secure • 🚀 Fast • 🛡️ Private
+      </div>
+      <div class="footer-brand">
+        by <a href="https://easylogin-2fa.netlify.app/" class="teerex-link">teerex 🦖</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="notification" id="notification"></div>
+
+  <script>
+    // Global variables
+    let totalConverted = 0;
+    let lastInputLength = 0;
+    let customFormat = null;
+    let lastAutoConvertFormat = null;
+    let convert2FAToLinks = true;
+    let lastGeneratedSocialPlatform = null;
+    let isReverseMode = false;
+    let processingTimeout = null;
+    let isProcessingLargeData = false;
+    let isInitialized = false;
+    let twoFAPrefix = 'https://easylogin-2fa.netlify.app/';
+
+    // Load saved 2FA prefix from localStorage
+    function load2FAPrefix() {
+      const saved = localStorage.getItem('logsFormatter2FAPrefix');
+      if (saved) {
+        twoFAPrefix = saved;
+        document.getElementById('prefixInput').value = saved;
+        document.getElementById('currentPrefix').textContent = saved;
+      } else {
+        document.getElementById('prefixInput').value = twoFAPrefix;
+        document.getElementById('currentPrefix').textContent = twoFAPrefix;
+      }
+    }
+
+    // Save 2FA prefix to localStorage
+    function save2FAPrefix() {
+      const prefixInput = document.getElementById('prefixInput');
+      const newPrefix = prefixInput.value.trim();
+      
+      if (!newPrefix) {
+        showNotification('Please enter a valid prefix!', 'error');
+        return;
+      }
+
+      // Ensure prefix ends with / if it's a URL
+      const formattedPrefix = newPrefix.endsWith('/') ? newPrefix : newPrefix + '/';
+      
+      twoFAPrefix = formattedPrefix;
+      localStorage.setItem('logsFormatter2FAPrefix', formattedPrefix);
+      document.getElementById('currentPrefix').textContent = formattedPrefix;
+      
+      const saveBtn = document.getElementById('savePrefix');
+      saveBtn.classList.add('saved');
+      saveBtn.innerHTML = '✅ Saved!';
+      
+      setTimeout(() => {
+        saveBtn.classList.remove('saved');
+        saveBtn.innerHTML = '💾 Save Prefix';
+      }, 2000);
+
+      showNotification('2FA prefix saved successfully!');
+      
+      // Re-convert if there's input
+      const inputText = document.getElementById('input').value;
+      if (inputText.trim()) {
+        autoConvert();
+      }
+    }
+
+    // Reset 2FA prefix to default
+    function reset2FAPrefix() {
+      const defaultPrefix = 'https://easylogin-2fa.netlify.app/';
+      twoFAPrefix = defaultPrefix;
+      localStorage.removeItem('logsFormatter2FAPrefix');
+      document.getElementById('prefixInput').value = defaultPrefix;
+      document.getElementById('currentPrefix').textContent = defaultPrefix;
+      
+      showNotification('2FA prefix reset to default!');
+      
+      // Re-convert if there's input
+      const inputText = document.getElementById('input').value;
+      if (inputText.trim()) {
+        autoConvert();
+      }
+    }
+
+    // Enhanced 2FA patterns
+    const credentialPatterns = [
+      /2FA[-_\s]*Link[-_\s]*:[-_\s]*([A-Za-z0-9]+)/gi,
+      /2FA[-_\s]*Code[-_\s]*:[-_\s]*([A-Za-z0-9]+)/gi,
+      /2FA[-_\s]*:[-_\s]*([A-Za-z0-9]+)/gi,
+      /Two[-_\s]*Factor[-_\s]*:[-_\s]*([A-Za-z0-9]+)/gi,
+      /Authentication[-_\s]*:[-_\s]*([A-Za-z0-9]+)/gi,
+      /Auth[-_\s]*:[-_\s]*([A-Za-z0-9]+)/gi,
+      /\b([A-Z0-9]{10,})\b/g,
+      /[:;|,]([A-Z0-9]{10,})\s*$/g,
+      /[:;|,]([A-Z0-9]{10,})[:;|,]/g
+    ];
+
+    // Credential field detection patterns
+    const fieldPatterns = {
+      username: /username\s*[:=]\s*([^\s\n]+)/gi,
+      password: /password\s*[:=]\s*([^\s\n]+)/gi,
+      email: /email\s*[:=]\s*([^\s\n]+)/gi,
+      emailPassword: /email[-_\s]*password\s*[:=]\s*([^\s\n]+)/gi
+    };
+
+    // Detect Separator Function
+    function detectSeparator(format) {
+      var separators = [":", ",", "|", ";"];
+      for (var i = 0; i < separators.length; i++) {
+        if (format.includes(separators[i])) {
+          return separators[i];
         }
+      }
+      return null;
+    }
 
-        function isValidBase32(str) {
-            // More comprehensive Base32 validation
-            const base32Regex = /^[A-Z2-7]+=*$/i;
-            if (!base32Regex.test(str)) return false;
-            
-            // Additional validation: should be reasonable length for 2FA (usually 16, 32, etc.)
-            const cleanStr = str.replace(/=+$/, ''); // Remove padding
-            return cleanStr.length >= 16 && cleanStr.length <= 64;
-        }
-
-        function validateInput(secret) {
-            const secretInput = document.getElementById('secretInput');
-            const errorElement = document.getElementById('inputError');
-            const generateBtn = document.getElementById('generateBtn');
-            
-            // Clear previous errors
-            secretInput.classList.remove('input-error', 'shake');
-            errorElement.classList.remove('show');
-            
-            if (!secret || secret.trim() === '') {
-                showError('Please enter a 2FA secret key');
-                return false;
-            }
-            
-            // Clean the input first (remove spaces, dashes, underscores)
-            const cleanedSecret = cleanSecretInput(secret);
-            
-            // Check for common mistakes
-            if (cleanedSecret.length < 16) {
-                showError('Secret seems too short. 2FA keys are usually 16+ characters');
-                return false;
-            }
-            
-            if (cleanedSecret.length > 64) {
-                showError('Secret seems too long. Please check your input');
-                return false;
-            }
-            
-            // Check for obviously invalid patterns
-            if (/^\d+$/.test(cleanedSecret)) {
-                showError('This appears to be only numbers. 2FA secrets use Base32 (A-Z, 2-7)');
-                return false;
-            }
-            
-            if (!isValidBase32(cleanedSecret)) {
-                showError('Invalid format. Use only Base32 characters: A-Z and 2-7');
-                return false;
-            }
-            
-            return true;
-        }
-
-        function showError(message) {
-            const secretInput = document.getElementById('secretInput');
-            const errorElement = document.getElementById('inputError');
-            
-            secretInput.classList.add('input-error', 'shake');
-            errorElement.textContent = message;
-            errorElement.classList.add('show');
-            
-            // Remove shake animation after it completes
-            setTimeout(() => {
-                secretInput.classList.remove('shake');
-            }, 500);
-        }
-
-        function startFromInput() {
-            const secret = document.getElementById('secretInput').value.trim();
-            const generateBtn = document.getElementById('generateBtn');
-            
-            if (!validateInput(secret)) {
-                return;
-            }
-            
-            // Clean the secret before using it
-            const cleanedSecret = cleanSecretInput(secret);
-            
-            // Add loading state
-            generateBtn.innerHTML = '⏳ GENERATING';
-            generateBtn.disabled = true;
-            
-            // Small delay to show loading state
-            setTimeout(() => {
-                renderCode(cleanedSecret);
-                generateBtn.innerHTML = 'GENERATE';
-                generateBtn.disabled = false;
-            }, 100);
-        }
-
-        function renderCode(secret) {
-            if (!secret) {
-                document.getElementById('manualEntry').style.display = "block";
-                document.getElementById('mainDisplay').innerHTML = `
-                    <div style="margin: 20px 0; opacity: 0.8;">
-                        <p>Enter your 2FA secret key to generate codes</p>
-                    </div>
-                `;
-                return;
-            }
-
-            try {
-                // Clear any existing interval
-                if (currentInterval) {
-                    clearInterval(currentInterval);
-                }
-
-                const token = generateToken(secret);
-                document.getElementById('manualEntry').style.display = "none";
-                const mainDiv = document.getElementById('mainDisplay');
-                
-                // Mask secret for display (show first 4 and last 4 chars with dots)
-                const maskSecret = (str) => {
-                    if (str.length <= 8) return str;
-                    return `${str.substring(0, 4)}•••••••${str.substring(str.length - 4)}`;
-                };
-                const displaySecret = maskSecret(secret);
-
-                mainDiv.innerHTML = `
-                    <div class="code">${formatCode(token)}</div>
-                    <div class="timer">⏱ Expires in <span id="countdown">30</span>s</div>
-                    <div class="secret-display">
-                        Secret: ${displaySecret}
-                    </div>
-                    <div class="action-buttons">
-                        <button onclick="copyCode()" class="copy-btn">COPY 📋</button>
-                        <button onclick="goHome()" class="home-btn">HOME 🏠</button>
-                    </div>
-                `;
-
-                // Start the countdown immediately
-                updateCountdown(secret);
-
-                // Set up interval for countdown
-                currentInterval = setInterval(() => updateCountdown(secret), 1000);
-
-            } catch (error) {
-                document.getElementById('mainDisplay').innerHTML = `
-                    <div style="color: var(--error); margin: 20px 0;">
-                        <p style="font-weight: bold;">❌ ${error.message}</p>
-                        <p style="font-size: 0.9em; margin-top: 10px; color: var(--neutral-medium);">
-                            Please check your secret key and try again.
-                        </p>
-                    </div>
-                `;
-                document.getElementById('manualEntry').style.display = "block";
-                document.getElementById('secretInput').classList.add('input-error');
-            }
-        }
-
-        function formatCode(code) {
-            // Add spacing for better readability
-            return code.replace(/(\d{3})(\d{3})/, '$1 $2');
-        }
-
-        function updateCountdown(secret) {
-            const remaining = 30 - Math.floor(Date.now() / 1000) % 30;
-            const countdownElement = document.getElementById('countdown');
-            const timerElement = document.querySelector('.timer');
-            const codeElement = document.querySelector('.code');
-            
-            if (countdownElement) {
-                countdownElement.textContent = remaining;
-                
-                // Update token if we're at the start of a new period
-                if (remaining === 30) {
-                    try {
-                        const token = generateToken(secret);
-                        if (codeElement) {
-                            codeElement.textContent = formatCode(token);
-                        }
-                    } catch (error) {
-                        console.error('Error updating token:', error);
-                    }
-                }
-                
-                // Dynamic timer styling
-                if (remaining <= 5) {
-                    countdownElement.style.color = 'var(--error)';
-                    if (timerElement) {
-                        timerElement.style.animation = 'pulse 0.5s infinite';
-                        timerElement.style.fontWeight = 'bold';
-                    }
-                } else if (remaining <= 10) {
-                    countdownElement.style.color = 'var(--warning)';
-                    if (timerElement) {
-                        timerElement.style.animation = 'pulse 1s infinite';
-                        timerElement.style.fontWeight = 'bold';
-                    }
-                } else if (remaining <= 20) {
-                    countdownElement.style.color = 'var(--info)';
-                    if (timerElement) {
-                        timerElement.style.animation = 'none';
-                        timerElement.style.fontWeight = '600';
-                    }
-                } else {
-                    countdownElement.style.color = 'var(--success)';
-                    if (timerElement) {
-                        timerElement.style.animation = 'none';
-                        timerElement.style.fontWeight = '600';
-                    }
-                }
-            }
-        }
-
-        function copyCode() {
-            const codeElement = document.querySelector('.code');
-            if (!codeElement) return;
-            
-            const code = codeElement.textContent.replace(/\s/g, ''); // Remove spaces
-            navigator.clipboard.writeText(code).then(() => {
-                showToast('Code copied! ✓');
-            }).catch(err => {
-                console.error('Failed to copy code:', err);
-                showToast('Failed to copy code');
+    // Detect input format from actual input data
+    function detectInputFormat(inputText) {
+      if (!inputText.trim()) return '';
+      
+      const firstLine = inputText.split('\n')[0];
+      const separators = [":", "|", ";", ","];
+      
+      for (const sep of separators) {
+        if (firstLine.includes(sep)) {
+          const parts = firstLine.split(sep);
+          if (parts.length >= 3) {
+            const suggestions = parts.map((_, index) => {
+              if (index === 0) return 'username';
+              if (index === 1) return 'password';
+              if (index === 2 && parts.length === 3) return '2fa';
+              if (index === 2 && parts[index].includes('@')) return 'email';
+              if (index === 3) return '2fa';
+              if (index === 4) return '2fa';
+              return `field${index + 1}`;
             });
+            return suggestions.join(sep);
+          }
         }
+      }
+      return 'username:password:2fa';
+    }
 
-        function showToast(message) {
-            const toast = document.getElementById('copyToast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
+    // Enhanced field detection functions
+    function isEmail(field) {
+      return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(field.trim());
+    }
 
-        function clearInput() {
-            document.getElementById('secretInput').value = '';
-            document.getElementById('secretInput').classList.remove('input-error');
-            document.getElementById('inputError').classList.remove('show');
-            document.getElementById('secretInput').focus();
-            // disable clear when nothing to clear
-            const clearBtn = document.getElementById('clearBtn');
-            if (clearBtn) clearBtn.disabled = true;
-        }
+    function is2FACode(field) {
+      const clean = field.trim().replace(/[^A-Za-z0-9]/g, '');
+      return clean.length >= 10 && /^[A-Z0-9]{10,}$/.test(clean);
+    }
 
-        function goHome() {
-            // Clear interval when leaving the page
-            if (currentInterval) {
-                clearInterval(currentInterval);
-            }
-            window.location.href = window.location.origin;
-        }
+    function isHash(field) {
+      const clean = field.trim();
+      return /^[a-fA-F0-9]{32,}$/.test(clean) || 
+             /^[0-9a-fA-F]{40,}$/.test(clean) ||
+             clean.length > 30 && /^[a-zA-Z0-9+/=]{30,}$/.test(clean);
+    }
 
-        // Handle paste events for validation
-        document.addEventListener('DOMContentLoaded', function() {
-            const secretInput = document.getElementById('secretInput');
-            const clearBtn = document.getElementById('clearBtn');
-            const generateBtn = document.getElementById('generateBtn');
-            if (clearBtn) clearBtn.disabled = true; // start muted
-            if (generateBtn) generateBtn.disabled = true; // start disabled
+    function isPhoneNumber(field) {
+      const clean = field.replace(/[^\d]/g, '');
+      return clean.length >= 10 && clean.length <= 15 && /^\d+$/.test(clean);
+    }
 
-            if (secretInput) {
-                // On paste: auto-clean the input (remove spaces, dashes, underscores)
-                secretInput.addEventListener('paste', function(e) {
-                    setTimeout(() => {
-                        const pastedValue = e.target.value || '';
-                        // Clean the input automatically
-                        const cleanedValue = cleanSecretInput(pastedValue);
-                        if (cleanedValue !== pastedValue) {
-                            this.value = cleanedValue;
-                        }
-                        // keep UI clean until user explicitly generates
-                        secretInput.classList.remove('input-error');
-                        document.getElementById('inputError').classList.remove('show');
-                        if (clearBtn) clearBtn.disabled = !cleanedValue.trim();
-                        
-                        // Enable generate button only if input looks valid
-                        const generateBtn = document.getElementById('generateBtn');
-                        const isValid = cleanedValue.length >= 16 && /^[A-Z2-7]+=*$/i.test(cleanedValue);
-                        if (generateBtn) generateBtn.disabled = !isValid;
-                    }, 0);
-                });
-
-                // Auto-clean on input (as user types)
-                secretInput.addEventListener('input', function() {
-                    const currentValue = this.value;
-                    const cleanedValue = cleanSecretInput(currentValue);
-                    if (cleanedValue !== currentValue) {
-                        this.value = cleanedValue;
-                    }
-                    
-                    const generateBtn = document.getElementById('generateBtn');
-                    const inputValue = this.value.trim();
-                    
-                    if (inputValue) {
-                        this.classList.remove('input-error');
-                        document.getElementById('inputError').classList.remove('show');
-                        if (clearBtn) clearBtn.disabled = false;
-                        
-                        // Enable generate button only if input looks valid
-                        const isValid = inputValue.length >= 16 && /^[A-Z2-7]+=*$/i.test(inputValue);
-                        if (generateBtn) generateBtn.disabled = !isValid;
-                    } else {
-                        if (clearBtn) clearBtn.disabled = true;
-                        if (generateBtn) generateBtn.disabled = true;
-                    }
-                });
-
-                // Enter key support
-                secretInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        startFromInput();
-                    }
-                });
-
-                // Ensure clean state on load
-                secretInput.classList.remove('input-error');
-                document.getElementById('inputError').classList.remove('show');
-                // Auto-focus if manual entry visible
-                if (document.getElementById('manualEntry').style.display !== 'none') {
-                    secretInput.focus();
-                }
-            }
-        });
-
-        (function initTOTP() {
-            if (!window.otplib) {
-                document.getElementById('mainDisplay').innerHTML = 
-                    "<p class='loading-dots'>Loading TOTP library</p>";
-                setTimeout(() => window.location.reload(), 2000);
-                return;
-            }
-
-            const { authenticator } = window.otplib;
-
-            generateToken = function(secret) {
-                if (!secret) throw new Error('Secret is required');
-                if (!isValidBase32(secret)) throw new Error('Invalid Base32 format');
-                
-                try {
-                    return authenticator.generate(secret);
-                } catch (error) {
-                    throw new Error('Invalid secret key');
-                }
-            };
-
-            // Extract secret from multiple URL sources
-            function extractSecretFromURL() {
-                // Method 1: Query parameter (?secret=XXX) - works with file:// protocol
-                const urlParams = new URLSearchParams(window.location.search);
-                const querySecret = urlParams.get('secret');
-                if (querySecret && querySecret.trim()) {
-                    return cleanSecretInput(querySecret.trim());
-                }
-                
-                // Method 2: Hash (#SECRET) - works with file:// protocol
-                const hashSecret = window.location.hash.slice(1).trim();
-                if (hashSecret) {
-                    return cleanSecretInput(hashSecret);
-                }
-                
-                // Method 3: Original path method (/SECRET) - requires web server
-                const pathSecret = window.location.pathname.slice(1).split('/')[0].trim();
-                if (pathSecret) {
-                    return cleanSecretInput(pathSecret);
-                }
-                
-                return null;
-            }
-
-            const extractedSecret = extractSecretFromURL();
-            
-            if (extractedSecret) {
-                renderCode(extractedSecret);
+    function smartFieldClassification(parts, separator) {
+      let classification = [];
+      
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i].trim();
+        
+        if (i === 0) {
+          if (isEmail(part)) {
+            classification.push({ type: 'email', value: part, label: 'email' });
+          } else if (isPhoneNumber(part)) {
+            classification.push({ type: 'phone', value: part, label: 'username' });
+          } else {
+            classification.push({ type: 'username', value: part, label: 'username' });
+          }
+        } else if (i === 1) {
+          classification.push({ type: 'password', value: part, label: 'password' });
+        } else {
+          if (is2FACode(part)) {
+            classification.push({ type: '2fa', value: part, label: '2FA' });
+          } else if (isEmail(part)) {
+            classification.push({ type: 'email', value: part, label: 'email' });
+          } else if (isHash(part)) {
+            classification.push({ type: 'hash', value: part, label: null });
+          } else if (part.length > 20 && /^[a-zA-Z0-9+/=]+$/.test(part)) {
+            classification.push({ type: 'token', value: part, label: null });
+          } else {
+            if (i === 3) {
+              classification.push({ type: 'emailPassword', value: part, label: 'email-password' });
             } else {
-                // Show the manual entry form that already exists in the DOM
-                document.getElementById('manualEntry').style.display = "block";
-                // ensure clean error state on startup
-                const secretInput = document.getElementById('secretInput');
-                if (secretInput) {
-                    secretInput.classList.remove('input-error');
-                    document.getElementById('inputError').classList.remove('show');
-                    secretInput.focus();
-                }
+              classification.push({ type: 'generic', value: part, label: `field${i + 1}` });
             }
-        })();
+          }
+        }
+      }
+      
+      return classification;
+    }
 
-        // Handle page visibility changes to prevent timer drift
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden && currentInterval) {
-                // Page became visible, refresh the code immediately
-                const secretInput = document.getElementById('secretInput');
-                
-                // Use same extraction logic as init (supports all URL methods)
-                function getCurrentSecret() {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const querySecret = urlParams.get('secret');
-                    if (querySecret && querySecret.trim()) return cleanSecretInput(querySecret.trim());
-                    
-                    const hashSecret = window.location.hash.slice(1).trim();
-                    if (hashSecret) return cleanSecretInput(hashSecret);
-                    
-                    const pathSecret = window.location.pathname.slice(1).split('/')[0].trim();
-                    if (pathSecret) return cleanSecretInput(pathSecret);
-                    
-                    return secretInput ? cleanSecretInput(secretInput.value.trim()) : '';
+    // Format with custom format
+    function formatWithCustomFormat(inputText, format) {
+      if (!format || !inputText) return inputText;
+      
+      const separator = detectSeparator(format);
+      if (!separator) return inputText;
+      
+      const lines = inputText.split('\n');
+      let formattedText = '';
+      
+      lines.forEach(function(line) {
+        if (!line.trim()) return;
+        
+        const parts = line.split(separator);
+        let formattedLine = '';
+        const formatParts = format.split(separator);
+        
+        formatParts.forEach(function(field, index) {
+          if (parts[index] && field.trim() !== "omit") {
+            if (field.trim().toLowerCase().includes('2fa') && parts[index]) {
+              const cleanCode = parts[index].trim().replace(/[^A-Za-z0-9]/g, '');
+              if (cleanCode.length >= 10 && /^[A-Z0-9]{10,}$/.test(cleanCode)) {
+                if (convert2FAToLinks) {
+                  formattedLine += "2FA_Link: " + twoFAPrefix + cleanCode + "\n";
+                } else {
+                  formattedLine += "2FA: " + cleanCode + "\n";
                 }
-                
-                const currentSecret = getCurrentSecret();
-                if (currentSecret) {
-                    updateCountdown(currentSecret);
-                }
+                enable2FAToggle();
+              } else {
+                formattedLine += field.trim() + ": " + parts[index].trim() + "\n";
+              }
+            } else {
+              formattedLine += field.trim() + ": " + parts[index].trim() + "\n";
             }
+          }
         });
-    </script>
+        
+        if (formattedLine.trim() !== "") {
+          formattedText += formattedLine + "\n";
+        }
+      });
+      
+      return formattedText;
+    }
+
+    // Load saved format from localStorage
+    function loadSavedFormat() {
+      const saved = localStorage.getItem('logsFormatterFormat');
+      if (saved) {
+        document.getElementById('formatInput').value = saved;
+      }
+    }
+
+    // Save format to localStorage
+    function saveFormat() {
+      const formatText = document.getElementById('formatInput').value.trim();
+      if (!formatText) {
+        showNotification('Please enter a format template!', 'error');
+        return;
+      }
+      
+      localStorage.setItem('logsFormatterFormat', formatText);
+      customFormat = formatText;
+      
+      const saveBtn = document.querySelector('.btn-save');
+      saveBtn.classList.add('saved');
+      saveBtn.innerHTML = '✅ Saved!';
+      
+      setTimeout(() => {
+        saveBtn.classList.remove('saved');
+        saveBtn.innerHTML = '💾 Save Format';
+      }, 2000);
+      
+      showNotification('Format saved successfully!');
+    }
+
+    // Reset to default format
+    function resetFormat() {
+      document.getElementById('formatInput').value = '';
+      localStorage.removeItem('logsFormatterFormat');
+      customFormat = null;
+      updateFormatPlaceholder();
+      showNotification('Format reset to default!');
+    }
+
+    // Toggle format section visibility
+    function toggleFormatSection(visible) {
+      const section = document.getElementById('formatSection');
+      if (visible) {
+        section.classList.remove('hidden');
+      } else {
+        section.classList.add('hidden');
+      }
+    }
+
+    function convertText(inputText) {
+      let convertedText = inputText;
+      let conversionCount = 0;
+      let patternsFound = new Set();
+
+      const lines = inputText.split('\n');
+      const outputLines = [];
+
+      lines.forEach(line => {
+        let processedLine = line;
+        let lineProcessed = false;
+
+        if (!line.trim()) {
+          outputLines.push(line);
+          return;
+        }
+
+        const separators = [':', '|', ';', ','];
+        let detectedSeparator = null;
+        let parts = [];
+
+        for (const sep of separators) {
+          if (line.includes(sep)) {
+            const testParts = line.split(sep);
+            if (testParts.length >= 3) {
+              detectedSeparator = sep;
+              parts = testParts;
+              break;
+            }
+          }
+        }
+
+        if (detectedSeparator && parts.length >= 3) {
+          const classification = smartFieldClassification(parts, detectedSeparator);
+          let formattedOutput = [];
+          let found2FA = false;
+          let autoFormatTemplate = [];
+
+          classification.forEach(field => {
+            if (field.label) {
+              autoFormatTemplate.push(field.label);
+              
+              if (field.type === '2fa') {
+                const cleanCode = field.value.trim().replace(/[^A-Za-z0-9]/g, '');
+                if (cleanCode.length >= 10 && /^[A-Z0-9]{10,}$/.test(cleanCode)) {
+                  if (convert2FAToLinks) {
+                    formattedOutput.push(`2FA_Link: ${twoFAPrefix}${cleanCode}`);
+                  } else {
+                    formattedOutput.push(`2FA: ${cleanCode}`);
+                  }
+                  found2FA = true;
+                  conversionCount++;
+                } else {
+                  formattedOutput.push(`${field.label}: ${field.value}`);
+                }
+              } else {
+                formattedOutput.push(`${field.label}: ${field.value}`);
+              }
+            } else {
+              autoFormatTemplate.push('omit');
+            }
+          });
+
+          if (formattedOutput.length > 0) {
+            processedLine = formattedOutput.join('\n') + '\n';
+            lineProcessed = true;
+            patternsFound.add('smart_classification');
+            lastAutoConvertFormat = autoFormatTemplate.join(detectedSeparator);
+            
+            if (found2FA) {
+              enable2FAToggle();
+            }
+          }
+        }
+
+        if (!lineProcessed) {
+          credentialPatterns.forEach((pattern, index) => {
+            if (index <= 5) {
+              const matches = [...line.matchAll(pattern)];
+              matches.forEach(match => {
+                const twoFACode = match[1];
+                if (twoFACode) {
+                  const cleanCode = twoFACode.trim().replace(/[^A-Za-z0-9]/g, '');
+                  if (cleanCode.length >= 10 && /^[A-Z0-9]{10,}$/.test(cleanCode)) {
+                    conversionCount++;
+                    patternsFound.add(index);
+                    if (convert2FAToLinks) {
+                      processedLine = processedLine.replace(twoFACode, `${twoFAPrefix}${cleanCode}`);
+                    } else {
+                      processedLine = processedLine.replace(twoFACode, cleanCode);
+                    }
+                    enable2FAToggle();
+                  }
+                }
+              });
+            }
+          });
+        }
+
+        outputLines.push(processedLine);
+      });
+
+      return {
+        text: outputLines.join('\n'),
+        count: conversionCount,
+        patterns: patternsFound.size
+      };
+    }
+
+    // Process large datasets
+    function processLargeDataset(inputText) {
+      const lines = inputText.split('\n');
+      const chunkSize = 500;
+      let processedLines = [];
+      let totalCount = 0;
+      let allPatterns = [];
+      
+      for (let i = 0; i < lines.length; i += chunkSize) {
+        const chunk = lines.slice(i, i + chunkSize).join('\n');
+        if (chunk.trim()) {
+          const result = convertText(chunk);
+          if (result.text.trim()) {
+            processedLines.push(result.text.trim());
+            totalCount += result.count;
+            allPatterns = allPatterns.concat(result.patterns);
+          }
+        }
+      }
+      
+      return {
+        text: processedLines.join('\n'),
+        count: totalCount,
+        patterns: [...new Set(allPatterns)]
+      };
+    }
+
+    function updateStats(converted, patterns, characters) {
+      document.getElementById('totalConverted').textContent = totalConverted;
+      document.getElementById('patternsDetected').textContent = patterns;
+      document.getElementById('charactersProcessed').textContent = characters;
+    }
+
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      
+      if (type === 'success') {
+        notification.style.background = '#4CAF50';
+      } else if (type === 'error') {
+        notification.style.background = '#f44336';
+      } else if (type === 'info') {
+        notification.style.background = '#2196F3';
+      }
+      
+      notification.classList.add('show');
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+
+    // REVERSE CLEAN MODE FUNCTIONS
+
+    function reverseClean(inputText, separator = ':') {
+      if (!inputText.trim()) return '';
+      
+      const lines = inputText.split('\n');
+      const outputLines = [];
+      let currentRecord = {};
+      let recordOrder = [];
+      
+      lines.forEach(line => {
+        const trimmedLine = line.trim();
+        
+        if (!trimmedLine || trimmedLine.startsWith('---') || trimmedLine.startsWith('Profile Links')) {
+          if (Object.keys(currentRecord).length > 0) {
+            outputLines.push(buildReverseLine(currentRecord, recordOrder, separator));
+            currentRecord = {};
+            recordOrder = [];
+          }
+          return;
+        }
+        
+        const colonMatch = trimmedLine.match(/^([^:]+?)\s*:\s*(.+)$/);
+        if (colonMatch) {
+          let key = colonMatch[1].trim().toLowerCase();
+          let value = colonMatch[2].trim();
+          
+          if (key === '2fa_link' || key === '2fa link' || key === '2fa-link') {
+            const codeMatch = value.match(/\/([A-Z0-9]+)$/);
+            if (codeMatch) {
+              value = codeMatch[1];
+              key = '2fa';
+            }
+          }
+          
+          key = normalizeKey(key);
+          
+          if (!currentRecord[key]) {
+            currentRecord[key] = value;
+            recordOrder.push(key);
+          }
+        } else {
+          if (Object.keys(currentRecord).length > 0) {
+            outputLines.push(buildReverseLine(currentRecord, recordOrder, separator));
+            currentRecord = {};
+            recordOrder = [];
+          }
+        }
+      });
+      
+      if (Object.keys(currentRecord).length > 0) {
+        outputLines.push(buildReverseLine(currentRecord, recordOrder, separator));
+      }
+      
+      return outputLines.filter(line => line).join('\n');
+    }
+
+    function normalizeKey(key) {
+      const keyMap = {
+        'username': 'username',
+        'user': 'username',
+        'login': 'username',
+        'password': 'password',
+        'pass': 'password',
+        'pwd': 'password',
+        'email': 'email',
+        'mail': 'email',
+        'e-mail': 'email',
+        'email-password': 'email-password',
+        'emailpassword': 'email-password',
+        'email password': 'email-password',
+        'email pass': 'email-password',
+        'mail password': 'email-password',
+        'm.pass': 'email-password',
+        'mpass': 'email-password',
+        '2fa': '2fa',
+        '2fa_link': '2fa',
+        '2fa link': '2fa',
+        'two factor': '2fa',
+        'twofactor': '2fa',
+        'alt mail': 'alt-email',
+        'alt email': 'alt-email',
+        'alternate email': 'alt-email'
+      };
+      
+      return keyMap[key.toLowerCase()] || key;
+    }
+
+    function buildReverseLine(record, order, separator) {
+      const values = [];
+      const standardOrder = ['username', 'password', 'email', 'email-password', '2fa', 'alt-email'];
+      const finalOrder = order.length > 0 ? order : standardOrder.filter(k => record[k]);
+      
+      finalOrder.forEach(key => {
+        if (record[key]) {
+          values.push(record[key]);
+        }
+      });
+      
+      return values.join(separator);
+    }
+
+    function manualConvert() {
+      const inputText = document.getElementById('input').value;
+      const autoConvertToggle = document.getElementById('autoConvert');
+      const reverseModeToggle = document.getElementById('reverseMode');
+      const formatText = document.getElementById('formatInput').value.trim();
+      
+      if (!inputText.trim()) {
+        showNotification('Please enter some text to convert!', 'error');
+        return;
+      }
+      
+      if (reverseModeToggle && reverseModeToggle.checked) {
+        const separator = document.getElementById('reverseSeparator').value;
+        const reversed = reverseClean(inputText, separator);
+        document.getElementById('output').value = reversed;
+        
+        const lineCount = reversed.split('\n').filter(l => l.trim()).length;
+        updateStats(lineCount, 1, inputText.length);
+        showNotification(`Successfully reversed ${lineCount} credential${lineCount !== 1 ? 's' : ''}!`);
+        return;
+      }
+      
+      if (!autoConvertToggle.checked && !formatText) {
+        showNotification('Please enter a custom format or enable auto-convert!', 'error');
+        return;
+      }
+      
+      let result;
+      if (formatText && !autoConvertToggle.checked) {
+        const formatted = formatWithCustomFormat(inputText, formatText);
+        result = {
+          text: formatted,
+          count: (formatted.match(/https:\/\/easylogin-2fa\.netlify\.app\//g) || []).length,
+          patterns: 1
+        };
+      } else {
+        result = convertText(inputText);
+      }
+      
+      document.getElementById('output').value = result.text;
+      
+      totalConverted += result.count;
+      updateStats(result.count, result.patterns, inputText.length);
+      
+      if (result.count > 0) {
+        showNotification(`Successfully converted ${result.count} credential${result.count !== 1 ? 's' : ''}!`);
+      } else {
+        showNotification('Formatted text but no 2FA patterns found.', 'success');
+      }
+    }
+
+    function autoConvert() {
+      const autoConvertToggle = document.getElementById('autoConvert');
+      const reverseModeToggle = document.getElementById('reverseMode');
+      
+      if (!autoConvertToggle || !autoConvertToggle.checked) {
+        return;
+      }
+      
+      const inputText = document.getElementById('input').value;
+      
+      if (reverseModeToggle && reverseModeToggle.checked) {
+        const separator = document.getElementById('reverseSeparator').value;
+        const reversed = reverseClean(inputText, separator);
+        document.getElementById('output').value = reversed;
+        
+        const lineCount = reversed.split('\n').filter(l => l.trim()).length;
+        updateStats(lineCount, 1, inputText.length);
+        return;
+      }
+      
+      if (inputText.length > 100000) {
+        const result = processLargeDataset(inputText);
+        document.getElementById('output').value = result.text;
+        if (inputText.length !== lastInputLength) {
+          updateStats(result.count, result.patterns, inputText.length);
+          lastInputLength = inputText.length;
+        }
+      } else {
+        const result = convertText(inputText);
+        document.getElementById('output').value = result.text;
+        
+        if (inputText.length !== lastInputLength) {
+          updateStats(result.count, result.patterns, inputText.length);
+          lastInputLength = inputText.length;
+        }
+      }
+    }
+
+    function copyOutput() {
+      const output = document.getElementById('output');
+      const outputText = output.value;
+      
+      if (!outputText.trim()) {
+        showNotification('Nothing to copy! Convert some text first.', 'error');
+        return;
+      }
+      
+      navigator.clipboard.writeText(outputText).then(() => {
+        showNotification('Converted text copied to clipboard!');
+        // Keep output visible so buttons remain active
+        lastGeneratedSocialPlatform = null;
+        updateSocialButtonStates();
+      }).catch(() => {
+        output.select();
+        document.execCommand('copy');
+        showNotification('Converted text copied to clipboard!');
+        // Keep output visible so buttons remain active
+        lastGeneratedSocialPlatform = null;
+        updateSocialButtonStates();
+      });
+    }
+
+    function clearAll() {
+      document.getElementById('input').value = '';
+      document.getElementById('output').value = '';
+      document.getElementById('formatInput').value = '';
+      
+      totalConverted = 0;
+      lastInputLength = 0;
+      customFormat = null;
+      lastAutoConvertFormat = null;
+      lastGeneratedSocialPlatform = null;
+      
+      disable2FAToggle();
+      updateSocialButtonStates();
+      updateStats(0, 0, 0);
+      updateFormatPlaceholder();
+      
+      showNotification('All content cleared!');
+    }
+
+    // 2FA Toggle Functions
+    function enable2FAToggle() {
+      const toggle = document.getElementById('toggleLinks');
+      const label = document.getElementById('toggleLabel');
+      
+      toggle.disabled = false;
+      label.textContent = 'Convert 2FA to Links';
+      label.style.color = 'rgba(230, 221, 196, 0.8)';
+    }
+
+    function disable2FAToggle() {
+      const toggle = document.getElementById('toggleLinks');
+      const label = document.getElementById('toggleLabel');
+      
+      toggle.disabled = true;
+      label.textContent = 'Convert 2FA to Links (No 2FA detected)';
+      label.style.color = 'rgba(230, 221, 196, 0.5)';
+    }
+
+    function toggle2FAConversion() {
+      convert2FAToLinks = document.getElementById('toggleLinks').checked;
+      
+      // Re-convert current input to update 2FA display
+      const inputText = document.getElementById('input').value;
+      if (inputText.trim()) {
+        autoConvert();
+      }
+    }
+
+    function updateFormatPlaceholder() {
+      const inputText = document.getElementById('input').value;
+      const formatInput = document.getElementById('formatInput');
+      
+      if (inputText.trim()) {
+        const detectedFormat = detectInputFormat(inputText);
+        
+        // Prefill the format input with detected format
+        const currentValue = formatInput.value.trim();
+        const savedFormat = localStorage.getItem('logsFormatterFormat');
+        
+        // Only prefill if field is empty or contains default placeholder text
+        if (!currentValue || currentValue === savedFormat) {
+          formatInput.value = detectedFormat;
+          customFormat = detectedFormat;
+        }
+        
+        // Update placeholder
+        formatInput.placeholder = `Detected format from your input:\n\n${detectedFormat}\n\nChange field names as needed:\n- Keep fields you want\n- Use 'omit' to skip fields\n- Supports separators: : | ; ,\n\nExample: username:password:omit:2fa`;
+      } else {
+        // Clear prefill when input is empty
+        formatInput.value = '';
+        customFormat = null;
+        formatInput.placeholder = "Enter your desired output format using detected structure:\n\nusername:password:2fa\n\nChange field names as needed:\n- Keep fields you want\n- Use 'omit' to skip fields\n- Supports separators: : | ; ,\n\nExample: username:password:omit:2fa";
+      }
+    }
+
+    function toggleAccordion(element) {
+      const section = element.closest('.accordion-section');
+      const isActive = section.classList.contains('active');
+      
+      document.querySelectorAll('.accordion-section').forEach(s => {
+        s.classList.remove('active');
+      });
+      
+      if (!isActive) {
+        section.classList.add('active');
+      }
+    }
+
+    // Social Link Generation Functions
+    function generateSocialLinks(platform) {
+      const outputField = document.getElementById('output');
+      const inputField = document.getElementById('input');
+      const outputText = outputField.value;
+      const inputText = inputField.value;
+      
+      // Extract usernames from both output and input
+      const usernames = [];
+      
+      // First, try to extract from formatted output
+      if (outputText.trim()) {
+        const lines = outputText.split('\n');
+        lines.forEach(line => {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) return;
+          
+          // Look for username: pattern in formatted output
+          const usernameMatch = trimmedLine.match(/^username\s*:\s*([^\s\n]+)/i);
+          if (usernameMatch) {
+            usernames.push(usernameMatch[1]);
+          }
+        });
+      }
+      
+      // If no usernames in output, extract from raw input
+      if (usernames.length === 0 && inputText.trim()) {
+        const lines = inputText.split('\n');
+        lines.forEach(line => {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || trimmedLine.startsWith('---')) return;
+          
+          // Extract first field from colon/pipe/semicolon separated formats
+          const separators = [':', '|', ';', ','];
+          for (const sep of separators) {
+            if (trimmedLine.includes(sep)) {
+              const parts = trimmedLine.split(sep);
+              if (parts.length >= 2 && parts[0].trim()) {
+                // First field is likely the username
+                const possibleUsername = parts[0].trim();
+                // Avoid emails and other non-username patterns
+                if (!possibleUsername.includes('@') && possibleUsername.length > 0) {
+                  usernames.push(possibleUsername);
+                }
+                break;
+              }
+            }
+          }
+        });
+      }
+      
+      if (usernames.length === 0) {
+        showNotification('No usernames found! Add some credentials first.', 'error');
+        return;
+      }
+      
+      // Generate profile links based on platform
+      const platformUrls = {
+        'x': 'https://x.com/',
+        'instagram': 'https://instagram.com/',
+        'facebook': 'https://facebook.com/',
+        'tiktok': 'https://tiktok.com/@',
+        'linkedin': 'https://linkedin.com/in/'
+      };
+      
+      const baseUrl = platformUrls[platform];
+      if (!baseUrl) return;
+      
+      // Generate links
+      const profileLinks = usernames.map(username => `${baseUrl}${username}`);
+      
+      // Append to output
+      let newOutput = outputText;
+      if (!newOutput.endsWith('\n\n')) {
+        newOutput += '\n\n';
+      }
+      newOutput += `--- Profile Links: ${platform.toUpperCase()} ---\n`;
+      profileLinks.forEach(link => {
+        newOutput += link + '\n';
+      });
+      
+      outputField.value = newOutput;
+      lastGeneratedSocialPlatform = platform;
+      updateSocialButtonStates();
+      
+      showNotification(`Generated ${profileLinks.length} ${platform} profile link${profileLinks.length !== 1 ? 's' : ''}!`);
+    }
+
+    function updateSocialButtonStates() {
+      const outputField = document.getElementById('output');
+      const inputField = document.getElementById('input');
+      const outputText = outputField.value;
+      const inputText = inputField.value;
+      
+      const buttons = {
+        'btnX': 'x',
+        'btnInstagram': 'instagram',
+        'btnFacebook': 'facebook',
+        'btnTiktok': 'tiktok',
+        'btnLinkedin': 'linkedin'
+      };
+      
+      // Check if there are usernames in output OR valid input data
+      const hasFormattedUsernames = /username\s*:/i.test(outputText);
+      const hasRawInput = inputText.trim() && /[:;|,]/.test(inputText);
+      const hasUsernames = hasFormattedUsernames || hasRawInput;
+      
+      Object.keys(buttons).forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        const platform = buttons[btnId];
+        
+        if (hasUsernames) {
+          btn.disabled = false;
+          
+          // Highlight if this platform was last generated
+          if (lastGeneratedSocialPlatform === platform) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        } else {
+          btn.disabled = true;
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    // Event Listeners
+    document.getElementById('input').addEventListener('input', function() {
+      if (processingTimeout) {
+        clearTimeout(processingTimeout);
+      }
+      
+      processingTimeout = setTimeout(() => {
+        autoConvert();
+        updateFormatPlaceholder(); // This will now prefill the format field
+        updateSocialButtonStates();
+      }, 300);
+    });
+
+    document.getElementById('input').addEventListener('paste', function(e) {
+      setTimeout(() => {
+        autoConvert();
+        updateFormatPlaceholder(); // Prefill on paste as well
+        updateSocialButtonStates();
+      }, 10);
+    });
+
+    document.getElementById('autoConvert').addEventListener('change', function() {
+      toggleFormatSection(!this.checked);
+      if (this.checked) {
+        autoConvert();
+      } else {
+        // When turning OFF auto-convert, prefill with the exact format auto-convert detected
+        const formatInput = document.getElementById('formatInput');
+        const inputText = document.getElementById('input').value;
+        
+        if (inputText.trim() && lastAutoConvertFormat) {
+          // Use the last auto-detected format that was actually used during conversion
+          formatInput.value = lastAutoConvertFormat;
+          customFormat = lastAutoConvertFormat;
+        } else if (inputText.trim()) {
+          // Fallback to detectInputFormat if lastAutoConvertFormat is not available
+          const detectedFormat = detectInputFormat(inputText);
+          formatInput.value = detectedFormat;
+          customFormat = detectedFormat;
+        }
+      }
+      updateFormatPlaceholder();
+    });
+
+    document.getElementById('reverseMode').addEventListener('change', function() {
+      isReverseMode = this.checked;
+      const separator = document.getElementById('separatorSelector');
+      const autoConvert = document.getElementById('autoConvert');
+      
+      if (this.checked) {
+        separator.style.display = 'block';
+        autoConvert.checked = true;
+        autoConvert.disabled = true;
+        toggleFormatSection(false);
+      } else {
+        separator.style.display = 'none';
+        autoConvert.disabled = false;
+      }
+      
+      const inputText = document.getElementById('input').value;
+      if (inputText.trim()) {
+        manualConvert();
+      }
+    });
+
+    document.getElementById('reverseSeparator').addEventListener('change', function() {
+      const inputText = document.getElementById('input').value;
+      if (inputText.trim() && isReverseMode) {
+        manualConvert();
+      }
+    });
+
+    document.getElementById('toggleLinks').addEventListener('change', toggle2FAConversion);
+
+    document.getElementById('formatInput').addEventListener('input', function() {
+      const saved = localStorage.getItem('logsFormatterFormat');
+      if (this.value.trim() !== saved) {
+        customFormat = this.value.trim();
+      }
+    });
+
+    // Initialize
+    window.addEventListener('load', function() {
+      loadSavedFormat();
+      load2FAPrefix(); // Load saved 2FA prefix
+      toggleFormatSection(false);
+      disable2FAToggle();
+      updateSocialButtonStates();
+      updateFormatPlaceholder();
+      
+      const inputField = document.getElementById('input');
+      const outputField = document.getElementById('output');
+      
+      inputField.addEventListener('paste', function(e) {
+        setTimeout(() => {
+          autoConvert();
+          updateSocialButtonStates();
+        }, 10);
+      });
+      
+      isInitialized = true;
+    });
+  </script>
 </body>
 </html>
